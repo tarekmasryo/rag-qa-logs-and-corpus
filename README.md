@@ -1,14 +1,30 @@
-[# 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
+# 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
 
-A **production-style RAG Ops notebook + validation toolkit** that turns **multi-table RAG telemetry** into **decision-ready signals**.
+A **production-style RAG Ops notebook + validation toolkit** that turns **multi-table RAG telemetry**
+into **decision-ready signals**.
 
-This is not generic EDA — it answers operator questions:
-- **Attribution:** retrieval failure vs generation failure
-- **Risk slices:** where quality breaks (domain × scenario × difficulty)
-- **Trade-offs:** best config under **quality × cost × latency**
+This is **not generic EDA** — it answers operator questions:
+- **Attribution:** retrieval failure vs generation failure  
+- **Risk slices:** where quality breaks (domain × scenario × difficulty)  
+- **Trade-offs:** best config under **quality × cost × latency**  
 - **Gating:** choose a confidence threshold for rollout (**coverage vs error**)
 
-**Outputs:** KPI baselines, risk slice tables, config leaderboard, failure taxonomy, and threshold curves.
+**Outputs:** KPI baselines, prioritized risk slices, config leaderboard, failure taxonomy, and threshold curves.
+
+---
+
+## Why this matters
+
+Most RAG systems fail in production **silently**: aggregate metrics hide regressions, cost spikes,
+and hallucinations concentrated in specific slices.  
+This repo turns raw RAG logs into **operational signals** and **rollout decisions**.
+
+---
+
+## Links
+- Kaggle Dataset: https://www.kaggle.com/datasets/tarekmasryo/rag-qa-evaluation-logs-and-corpus
+- Kaggle Notebook: https://www.kaggle.com/code/tarekmasryo/rag-qa-logs-corpus
+- Schema notes: `docs/schema.md`
 
 ---
 
@@ -124,4 +140,3 @@ This repo is designed for **telemetry-style logs**. If you publish derived logs:
 
 ## Author
 **Tarek Masryo**
-](https://www.kaggle.com/datasets/tarekmasryo/rag-qa-evaluation-logs-and-corpus)
