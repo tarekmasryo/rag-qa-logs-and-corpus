@@ -14,7 +14,7 @@ This is not generic EDA — it answers operator questions:
 ---
 
 ## Notebook
-- `RAG_QA_Ops_Risk.ipynb`
+- `rag-qa-logs-and-corpus.ipynb`
 
 ## Dataset (Kaggle)
 - `tarekmasryo/RAG QA Logs & Corpus Data`
