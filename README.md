@@ -1,23 +1,21 @@
 # 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
 
-A **production-style RAG Ops notebook** that turns **multi-table RAG telemetry** into **decision-ready signals**.
+A **production-style RAG Ops notebook + validation toolkit** that turns **multi-table RAG telemetry** into **decision-ready signals**.
 
 This is not generic EDA — it answers operator questions:
-
-- **Attribution:** retrieval failure vs generation failure  
-- **Risk slices:** where quality breaks (domain × scenario × difficulty)  
-- **Trade-offs:** best config under **quality × cost × latency**  
-- **Gating:** pick a threshold to control **coverage vs error** for rollout
+- **Attribution:** retrieval failure vs generation failure
+- **Risk slices:** where quality breaks (domain × scenario × difficulty)
+- **Trade-offs:** best config under **quality × cost × latency**
+- **Gating:** choose a confidence threshold for rollout (**coverage vs error**)
 
 **Outputs:** KPI baselines, risk slice tables, config leaderboard, failure taxonomy, and threshold curves.
 
 ---
 
-## Notebook
-- `rag-qa-logs-and-corpus.ipynb`
-
-## Dataset (Kaggle)
-- `tarekmasryo/RAG QA Logs & Corpus Data`
+## Contents
+- Notebook: `rag-qa-logs-and-corpus.ipynb`
+- Dataset (Kaggle): `tarekmasryo/RAG QA Logs & Corpus Data`
+- Schema notes: `docs/schema.md`
 
 ---
 
@@ -39,23 +37,53 @@ This is not generic EDA — it answers operator questions:
 - `documents` / `chunks` → coverage + indexing surface
 - `retrieval_events` → ranks/scores (optional, deeper attribution)
 - `eval_runs` → quality labels + cost/latency + recall signals
-- `scenarios` → traffic mix for slicing (`scenario_type`, `difficulty`, `domain`)
+- `scenarios` → slicing keys (e.g., `scenario_type`, `difficulty`, `domain`)
 
 ---
 
-## 📦 Tables expected
+## 📦 Expected tables
 
-**Required**
-- `rag_corpus_documents.csv`
-- `rag_corpus_chunks.csv`
-- `rag_qa_eval_runs.csv`
-- `rag_qa_scenarios.csv`
+| Type | Files |
+|---|---|
+| Required | `rag_corpus_documents.csv`, `rag_corpus_chunks.csv`, `rag_qa_eval_runs.csv`, `rag_qa_scenarios.csv` |
+| Optional | `rag_retrieval_events.csv` (drill-down), `docs/data_dictionary.csv` (column descriptions) |
 
-**Optional**
-- `rag_retrieval_events.csv` → enables query → retrieved chunks drill-down
+---
 
-**Docs**
-- `docs/data_dictionary.csv` (schema helper; loaded if present)
+## Quickstart
+
+### Kaggle (recommended)
+1. Open `rag-qa-logs-and-corpus.ipynb` on Kaggle  
+2. Add the dataset as an input  
+3. Run all cells
+
+### Local
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate
+# Mac/Linux: source .venv/bin/activate
+
+pip install -U pip
+pip install -e ".[notebook]"
+jupyter lab
+```
+
+Put CSVs under `./data/`, or set:
+```bash
+export RAGQA_DATA_DIR=/path/to/csvs   # Mac/Linux
+# PowerShell:
+# $env:RAGQA_DATA_DIR="C:\path\to\csvs"
+```
+
+---
+
+## Validate the dataset
+
+Run integrity checks without Jupyter:
+```bash
+pip install -e .
+ragqa-validate --data-dir ./data
+```
 
 ---
 
@@ -85,30 +113,14 @@ This is not generic EDA — it answers operator questions:
 
 ---
 
-## ⚙️ Run
+## Data & privacy note
 
-### Kaggle (recommended)
-1. Open the notebook on Kaggle.
-2. Add the dataset (above) as an input.
-3. Run all cells.
-
-### Local
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Mac/Linux: source .venv/bin/activate
-
-pip install -U pip
-pip install -r requirements.txt
-jupyter lab
-```
-
-Place CSVs under:
-- `./data/` (same filenames)
-- optional: `./docs/data_dictionary.csv`
+This repo is designed for **telemetry-style logs**. If you publish derived logs:
+- remove **PII** (emails, usernames, raw user prompts, internal URLs)
+- anonymize / hash queries where needed
+- attach a clear **data license** (the Kaggle dataset page should be the source of truth)
 
 ---
 
 ## Author
-
 **Tarek Masryo**

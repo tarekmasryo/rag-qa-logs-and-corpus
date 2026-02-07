@@ -1,9 +1,19 @@
+# Python
 __pycache__/
-.ipynb_checkpoints/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
+*.py[cod]
+*.so
+.venv/
 venv/
-ENV/
+.env
+
+# Build
+build/
+dist/
+*.egg-info/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
