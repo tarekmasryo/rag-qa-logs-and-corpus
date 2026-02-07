@@ -1,4 +1,4 @@
-# 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
+[# 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
 
 A **production-style RAG Ops notebook + validation toolkit** that turns **multi-table RAG telemetry** into **decision-ready signals**.
 
@@ -124,3 +124,4 @@ This repo is designed for **telemetry-style logs**. If you publish derived logs:
 
 ## Author
 **Tarek Masryo**
+](https://www.kaggle.com/datasets/tarekmasryo/rag-qa-evaluation-logs-and-corpus)
