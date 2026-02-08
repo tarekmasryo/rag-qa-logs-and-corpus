@@ -1,6 +1,6 @@
 # Dataset schema (quick reference)
 
-This repo expects these CSVs (names are fixed):
+This repo expects these CSVs (required filenames):
 
 Required:
 - `rag_corpus_documents.csv`

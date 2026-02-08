@@ -1,142 +1,121 @@
 # 🧠 RAG QA Logs & Corpus — Decision-Grade RAG Ops Notebook
 
-A **production-style RAG Ops notebook + validation toolkit** that turns **multi-table RAG telemetry**
-into **decision-ready signals**.
+A production-style **RAG Ops notebook** plus a **schema-aware validation CLI** that turns multi-table
+RAG telemetry into **decision-ready signals**.
 
-This is **not generic EDA** — it answers operator questions:
-- **Attribution:** retrieval failure vs generation failure  
-- **Risk slices:** where quality breaks (domain × scenario × difficulty)  
-- **Trade-offs:** best config under **quality × cost × latency**  
-- **Gating:** choose a confidence threshold for rollout (**coverage vs error**)
-
-**Outputs:** KPI baselines, prioritized risk slices, config leaderboard, failure taxonomy, and threshold curves.
+**Full case study:** `CASE_STUDY.md`
 
 ---
 
-## Why this matters
+## ✅ What this repo gives you
+This is not generic EDA. It answers operator questions teams face before/after shipping RAG:
 
-Most RAG systems fail in production **silently**: aggregate metrics hide regressions, cost spikes,
-and hallucinations concentrated in specific slices.  
-This repo turns raw RAG logs into **operational signals** and **rollout decisions**.
+- **Attribution:** is the failure retrieval-side or generation-side?
+- **Risk slices:** where quality breaks (domain × scenario × difficulty)
+- **Trade-offs:** which configuration wins under **quality × cost × latency**
+- **Gating:** choose thresholds for rollout (**coverage vs error**)
 
----
-
-## Links
-- Kaggle Dataset: https://www.kaggle.com/datasets/tarekmasryo/rag-qa-evaluation-logs-and-corpus
-- Kaggle Notebook: https://www.kaggle.com/code/tarekmasryo/rag-qa-logs-corpus
-- Schema notes: `docs/schema.md`
+**Outputs:** KPI baselines, risk slice tables, config leaderboards, failure taxonomy, and threshold curves.
 
 ---
 
-## Contents
-- Notebook: `rag-qa-logs-and-corpus.ipynb`
-- Dataset (Kaggle): `tarekmasryo/RAG QA Logs & Corpus Data`
-- Schema notes: `docs/schema.md`
+## ⚡ Quick start
 
----
-
-## 🗺️ System map (tables → signals → decisions)
-
-```text
-┌───────────────┐      ┌───────────────┐      ┌─────────────────────────┐
-│   Documents   │ ───▶ │     Chunks     │ ───▶ │ Retrieval (top-k lists) │
-└───────────────┘      └───────────────┘      └─────────────────────────┘
-        ▲                       │                         │
-        │                       ▼                         ▼
- Corpus metadata         Retrieval events            QA eval runs (labels)
-        │                                                 │
-        ▼                                                 ▼
- Scenarios & use cases ───────────────────────────▶ Ops KPIs + risk + gates
-```
-
-**Mapping used in the notebook**
-- `documents` / `chunks` → coverage + indexing surface
-- `retrieval_events` → ranks/scores (optional, deeper attribution)
-- `eval_runs` → quality labels + cost/latency + recall signals
-- `scenarios` → slicing keys (e.g., `scenario_type`, `difficulty`, `domain`)
-
----
-
-## 📦 Expected tables
-
-| Type | Files |
-|---|---|
-| Required | `rag_corpus_documents.csv`, `rag_corpus_chunks.csv`, `rag_qa_eval_runs.csv`, `rag_qa_scenarios.csv` |
-| Optional | `rag_retrieval_events.csv` (drill-down), `docs/data_dictionary.csv` (column descriptions) |
-
----
-
-## Quickstart
-
-### Kaggle (recommended)
-1. Open `rag-qa-logs-and-corpus.ipynb` on Kaggle  
-2. Add the dataset as an input  
-3. Run all cells
-
-### Local
+### 1) Install
 ```bash
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# Mac/Linux: source .venv/bin/activate
+# Windows: .\.venv\Scripts\activate
+# macOS/Linux:
+# source .venv/bin/activate
 
-pip install -U pip
-pip install -e ".[notebook]"
-jupyter lab
-```
-
-Put CSVs under `./data/`, or set:
-```bash
-export RAGQA_DATA_DIR=/path/to/csvs   # Mac/Linux
-# PowerShell:
-# $env:RAGQA_DATA_DIR="C:\path\to\csvs"
-```
-
----
-
-## Validate the dataset
-
-Run integrity checks without Jupyter:
-```bash
+pip install -r requirements.txt
 pip install -e .
-ragqa-validate --data-dir ./data
+
+# Optional (dev): lint + tests
+pip install -e ".[dev]"
+```
+
+### 2) Put data in a folder
+This project expects the dataset CSVs in a single directory. See `docs/schema.md`.
+
+Recommended local path:
+```text
+data/raw/
+  rag_corpus_documents.csv
+  rag_corpus_chunks.csv
+  rag_qa_scenarios.csv
+  rag_qa_eval_runs.csv
+  rag_retrieval_events.csv        (optional)
+```
+
+### 3) Validate dataset integrity (CLI)
+```bash
+ragqa-validate --data-dir data/raw
+```
+
+Or set an env var once:
+```bash
+# Windows (PowerShell)
+$env:RAGQA_DATA_DIR="D:\path\to\data\raw"
+ragqa-validate
+
+# macOS/Linux
+export RAGQA_DATA_DIR="/path/to/data/raw"
+ragqa-validate
+```
+
+### 4) Run the notebook
+Open and run:
+- `rag-qa-logs-and-corpus.ipynb`
+
+The notebook reads the same data directory and exports analysis artifacts under `./artifacts/`.
+
+---
+
+## 🧭 Case study
+**Problem:** RAG systems fail in ways that dashboards often hide (silent regressions, cost spikes, retrieval collapse).  
+**Approach:** validate telemetry tables + compute decision views (quality, retrieval, cost/latency, gating).  
+**Evaluation:** slice metrics by domain/scenario/difficulty; separate retrieval vs generation failures when possible.  
+**Decision policy:** pick confidence thresholds that control **coverage vs error** for rollout.  
+**Deliverables:** a validator CLI + exported tables/figures to support release decisions.  
+**Limitations:** telemetry schemas vary across stacks; the validator enforces a strict “minimum contract”.
+
+Read the full write-up in `CASE_STUDY.md`.
+
+---
+
+## 📂 Repo layout
+```text
+.
+├── rag-qa-logs-and-corpus.ipynb   # decision-grade RAG ops notebook
+├── src/ragqa/                    # validation + IO helpers + CLI
+├── scripts/                      # thin entry script(s)
+├── tests/                        # pytest + small sample CSVs
+├── docs/schema.md                # expected files + joins
+├── data/raw/README.md            # where to put your dataset
+└── artifacts/README.md           # what gets exported
 ```
 
 ---
 
-## ✅ What the notebook does
+## 🔎 Dataset contract (minimum required)
+See `docs/schema.md`. Required files (required filenames):
+- `rag_corpus_documents.csv`
+- `rag_corpus_chunks.csv`
+- `rag_qa_scenarios.csv`
+- `rag_qa_eval_runs.csv`
 
-1) **Load & verify**
-- fast integrity checks: PK uniqueness + join consistency (prevents silent row blow-ups)
-
-2) **KPI baseline**
-- correctness / hallucination / faithfulness (label-aware)
-- cost & latency summaries (avg + p95 when available)
-
-3) **Coverage vs demand**
-- compares corpus distribution vs eval demand (spots “high-demand / low-coverage” gaps)
-
-4) **Risk slices**
-- prioritizes **high-volume + low-quality** segments (domain × scenario × difficulty)
-
-5) **Config trade-offs**
-- compares configs across **quality × cost × latency** and highlights practical winners
-
-6) **Failure taxonomy**
-- splits failures into **retrieval vs generation** (e.g., using `recall_at_10` threshold)
-
-7) **Confidence gate**
-- simple baseline (LogisticRegression) + threshold sweep for **coverage vs error** rollout control
+Optional:
+- `rag_retrieval_events.csv` (enables deeper retrieval attribution)
 
 ---
 
-## Data & privacy note
-
-This repo is designed for **telemetry-style logs**. If you publish derived logs:
-- remove **PII** (emails, usernames, raw user prompts, internal URLs)
-- anonymize / hash queries where needed
-- attach a clear **data license** (the Kaggle dataset page should be the source of truth)
+## 🧪 Quality gates
+- **ruff** linting (imports + correctness)
+- **pytest** unit test for dataset validation
+- **CI smoke validation** on the sample dataset under `tests/data`
 
 ---
 
-## Author
-**Tarek Masryo**
+## 📜 License
+MIT (code). Dataset licensing depends on your data source and must be specified where you publish the dataset.

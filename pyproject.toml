@@ -5,11 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ragqa"
 version = "0.1.0"
-description = "Decision-grade RAG QA telemetry: validation + ops signals tooling"
+description = "Decision-grade RAG QA telemetry: schema-aware validation + ops notebook"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
-authors = [{name = "Tarek Masryo"}]
+license = { text = "MIT" }
+authors = [{ name = "Tarek Masryo" }]
 
 dependencies = [
   "numpy",
@@ -17,12 +17,6 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-notebook = [
-  "matplotlib",
-  "seaborn",
-  "scikit-learn",
-]
-
 dev = [
   "pytest",
   "ruff",
@@ -30,9 +24,6 @@ dev = [
 
 [project.scripts]
 ragqa-validate = "ragqa.cli:main"
-
-[tool.setuptools]
-package-dir = {"" = "src"}
 
 [tool.setuptools.packages.find]
 where = ["src"]

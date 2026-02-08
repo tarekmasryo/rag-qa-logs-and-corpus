@@ -8,25 +8,28 @@ from .validation import validate_dataset
 
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="Validate RAG QA Logs & Corpus dataset integrity.")
-    p.add_argument(
+    parser = argparse.ArgumentParser(description="Validate RAG QA Logs & Corpus dataset integrity.")
+    parser.add_argument(
         "--data-dir",
         type=str,
         default=None,
         help="Folder containing the CSVs. If omitted, auto-detected (or via RAGQA_DATA_DIR).",
     )
+    args = parser.parse_args(argv)
 
-    args = p.parse_args(argv)
-    data_dir = Path(args.data_dir) if args.data_dir else resolve_data_dir()
+    try:
+        data_dir = resolve_data_dir(args.data_dir)
+        rep = validate_dataset(Path(data_dir))
+    except Exception as e:  # noqa: BLE001
+        print(f"ERROR: {e}")
+        return 2
 
-    rep = validate_dataset(data_dir)
     print("OK: dataset validated")
     print(f"data_dir: {rep.data_dir}")
     for k, v in rep.rows.items():
         print(f"rows[{k}]: {v}")
     for f, ok in rep.optional_present.items():
         print(f"optional[{f}]: {'present' if ok else 'missing'}")
-
     return 0
 
 

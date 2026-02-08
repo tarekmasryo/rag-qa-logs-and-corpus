@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable
 from pathlib import Path
 
 REQUIRED_FILES: list[str] = [
     "rag_corpus_documents.csv",
     "rag_corpus_chunks.csv",
-    "rag_qa_eval_runs.csv",
     "rag_qa_scenarios.csv",
+    "rag_qa_eval_runs.csv",
 ]
 
 OPTIONAL_FILES: list[str] = [
@@ -16,50 +15,46 @@ OPTIONAL_FILES: list[str] = [
 ]
 
 
-def _has_required(p: Path, required: Iterable[str] = REQUIRED_FILES) -> bool:
-    return all((p / f).exists() for f in required)
+def _has_required(p: Path) -> bool:
+    return all((p / f).exists() for f in REQUIRED_FILES)
 
 
-def resolve_data_dir() -> Path:
-    """Locate the folder containing the dataset CSVs.
+def resolve_data_dir(arg_data_dir: str | None = None) -> Path:
+    """Resolve the dataset directory.
 
-    Order:
-    1) env var `RAGQA_DATA_DIR`
-    2) current working directory
-    3) Kaggle: `/kaggle/input/<dataset>/`
-    4) recursive search from cwd (anchor file)
+    Priority:
+    1) --data-dir argument
+    2) RAGQA_DATA_DIR environment variable
+    3) current working directory if it contains required files
+    4) search under the current directory for required files (limited)
     """
+    if arg_data_dir:
+        p = Path(arg_data_dir).expanduser().resolve()
+        if not p.exists():
+            raise FileNotFoundError(f"data_dir does not exist: {p}")
+        return p
 
-    env = os.environ.get("RAGQA_DATA_DIR")
+    env = os.getenv("RAGQA_DATA_DIR")
     if env:
         p = Path(env).expanduser().resolve()
-        if _has_required(p):
-            return p
-        raise FileNotFoundError(f"RAGQA_DATA_DIR set but required files not found in: {p}")
+        if not p.exists():
+            raise FileNotFoundError(f"RAGQA_DATA_DIR does not exist: {p}")
+        return p
 
-    here = Path(".").resolve()
+    here = Path.cwd().resolve()
     if _has_required(here):
         return here
 
-    kaggle_root = Path("/kaggle/input")
-    if kaggle_root.exists():
-        for p in kaggle_root.iterdir():
-            if p.is_dir() and _has_required(p):
-                return p
-
-        hits = list(kaggle_root.rglob(REQUIRED_FILES[2]))
-        for h in hits[:25]:
+    # Lightweight search: look for one required file and verify siblings
+    # Avoid scanning huge trees.
+    for marker in (REQUIRED_FILES[0], REQUIRED_FILES[2]):
+        hits = list(here.rglob(marker))[:25]
+        for h in hits:
             base = h.parent
             if _has_required(base):
                 return base
 
-    hits = list(here.rglob(REQUIRED_FILES[2]))
-    for h in hits[:25]:
-        base = h.parent
-        if _has_required(base):
-            return base
-
     raise FileNotFoundError(
         "Could not locate required dataset CSVs. Put them in the working directory, "
-        "or set RAGQA_DATA_DIR to a folder that contains the required files."
+        "pass --data-dir, or set RAGQA_DATA_DIR to the folder containing the required files."
     )

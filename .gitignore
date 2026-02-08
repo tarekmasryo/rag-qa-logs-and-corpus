@@ -6,13 +6,23 @@ __pycache__/
 venv/
 .env
 
+# Tests
+.pytest_cache/
+
 # Build
 build/
 dist/
 *.egg-info/
 
-# Jupyter
+# Notebook
 .ipynb_checkpoints/
+
+# Local data & outputs (keep READMEs)
+data/raw/*
+!data/raw/README.md
+
+artifacts/*
+!artifacts/README.md
 
 # OS
 .DS_Store
