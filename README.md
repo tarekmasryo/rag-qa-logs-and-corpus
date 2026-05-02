@@ -174,6 +174,7 @@ This project uses a synthetic/offline evaluation dataset. It is useful for analy
 
 ---
 
+
 ## 📜 License
 
-Code is released under the MIT License. Dataset licensing should be specified separately wherever the dataset is published.
+MIT — see [`LICENSE`](LICENSE). Dataset licensing should be specified separately wherever the dataset is published.
