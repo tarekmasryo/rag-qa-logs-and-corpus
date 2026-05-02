@@ -1,91 +1,108 @@
-# Case Study — RAG QA Logs & Corpus (Decision-Grade RAG Ops)
+# Case Study — RAG QA Logs & Corpus
 
 ## Overview
-This repository provides a workflow for **RAG quality operations**: a multi-table telemetry dataset, a schema-aware validator, and an analysis notebook that turns logs into clear **release decisions**.
 
-It focuses on the operational questions that determine whether a system is safe to ship.
+This repository provides a compact workflow for analyzing synthetic RAG QA logs across retrieval behavior, answer quality, hallucination risk, latency, cost, and threshold trade-offs.
 
-## The real problem
-RAG systems can degrade quietly:
-- retrieval quality drops while top-line scores look “fine”
-- cost and latency drift upward without clear ownership
-- hallucinations rise in specific domains/scenarios
-- a new prompt/model improves one slice while breaking another
+It combines:
 
-If you only track aggregate metrics, you discover regressions after users do.
+- a Kaggle-ready notebook,
+- a small schema-aware validation CLI,
+- sample tests for the dataset contract,
+- and a concise repo structure suitable for public portfolio review.
 
-## Goals (definition of done)
-**Functional goals**
-- Validate dataset integrity across multiple CSV tables (required columns, key uniqueness, joins).
-- Produce decision views: **KPI baselines**, **risk slices**, **configuration leaderboards**, and **gating curves**.
+## Problem
 
-**Engineering goals**
-- Enforce a strict “minimum contract” to catch broken telemetry early.
-- Keep analysis reproducible and CPU-friendly (pandas / scikit-learn-style tooling).
-- Provide simple entry points: CLI validation + notebook analysis.
+RAG systems can fail in several different ways:
 
-**What success looks like**
-- You can identify the top failure slices, the best configuration under quality × cost × latency, and a safe rollout threshold.
+- the retriever misses the expected evidence,
+- the answer generator fails even when useful evidence is retrieved,
+- hallucination risk concentrates in specific slices,
+- a configuration improves quality but increases latency or cost,
+- aggregate metrics hide weak domains or difficult scenario types.
 
-## Data contract (minimum viable telemetry)
-The dataset behaves like a small relational system (CSV files as tables):
+The goal of this project is to make those failure modes easier to inspect from offline evaluation logs.
 
-- **Documents** (`rag_corpus_documents.csv`): what the corpus contains (`doc_id`, domain, metadata)
-- **Chunks** (`rag_corpus_chunks.csv`): how documents are split (`chunk_id` → `doc_id`)
-- **Scenarios** (`rag_qa_scenarios.csv`): evaluation groupings (domain/type/difficulty)
-- **Eval runs** (`rag_qa_eval_runs.csv`): model outputs + quality signals (`run_id` → `scenario_id`)
-- *(Optional)* **Retrieval events** (`rag_retrieval_events.csv`): which chunks were retrieved (`example_id`, `chunk_id`, score)
+## Goals
+
+### Functional goals
+
+- Validate that required CSV tables exist and can join correctly.
+- Check primary keys and foreign-key relationships.
+- Build clear views for quality, retrieval behavior, cost, and latency.
+- Identify higher-risk slices by domain, scenario type, and difficulty.
+- Compare retrieval/model configurations using transparent offline scoring.
+- Simulate threshold trade-offs on already-labeled evaluation logs.
+
+### Engineering goals
+
+- Keep the workflow reproducible and lightweight.
+- Use simple Python tooling suitable for Kaggle and local execution.
+- Separate dataset validation from notebook analysis.
+- Avoid presenting the diagnostic baseline as a deployable policy model.
+
+## Dataset contract
+
+The companion dataset is organized as a small relational corpus:
+
+- `rag_corpus_documents.csv` — document-level metadata.
+- `rag_corpus_chunks.csv` — chunk-level rows linked to documents.
+- `eval_runs.csv` — QA evaluation runs and answer-quality signals.
+- `rag_retrieval_events.csv` — retrieved chunks per example/run when available.
+- `scenarios.csv` — scenario metadata such as domain, type, and difficulty.
+- `data_dictionary.csv` — optional human-readable schema helper.
 
 The validator checks:
-- required file presence and required columns
-- primary-key uniqueness (where applicable)
-- foreign-key joins (chunks → documents, eval_runs → scenarios)
-- optional retrieval integrity checks when `rag_retrieval_events.csv` is present
 
-See `docs/schema.md` for required columns and join rules.
+- required file presence,
+- required columns,
+- primary-key uniqueness,
+- document-to-chunk joins,
+- eval-run-to-scenario joins,
+- optional retrieval-event joins when retrieval logs are present.
+
+See [`docs/schema.md`](docs/schema.md) for the concise schema reference.
 
 ## Approach
-### 1) Integrity first (fail fast)
-Before computing metrics, validate the dataset shape:
-- missing files / columns
-- duplicated IDs
-- broken joins (orphan chunks, unknown scenarios)
 
-This prevents drawing conclusions from corrupted telemetry.
+### 1) Validate structure first
 
-### 2) Decision views (not presentation-first charts)
-The notebook is structured around operator decisions:
-- **Attribution:** retrieval vs generation failure (when retrieval events exist)
-- **Risk slices:** domain × scenario_type × difficulty breakdowns
-- **Trade-offs:** quality vs cost vs latency across configurations (e.g., model, prompt, retriever settings, chunking)
-- **Gating:** confidence-threshold curves (coverage vs error) for rollout
+Before drawing conclusions, the repo checks whether the tables are structurally usable: missing files, duplicated IDs, and broken joins are surfaced early.
 
-### 3) Outputs
-The workflow is designed to produce outputs you can attach to a release decision:
-- a validation report from the CLI
-- exported tables/figures under `./artifacts/`
-- a short narrative of recommended actions (fix retrieval, change configuration, adjust threshold)
+### 2) Analyze useful slices
 
-Typical exported files include:
-- `artifacts/validation_report.json`
-- `artifacts/kpi_baselines.csv`
-- `artifacts/risk_slices.csv`
-- `artifacts/config_leaderboard.csv`
-- `artifacts/gating_curves.csv`
+The notebook avoids relying only on aggregate scores. It breaks results down by domain, scenario type, difficulty, retrieval setup, and generator model.
 
-## Usage
-Setup and execution steps are documented in `README.md`.
+### 3) Separate retrieval and answer failure
 
-Minimal flow:
-- Validate tables: `ragqa-validate --data-dir data/raw`
-- Run the notebook: `rag-qa-logs-and-corpus.ipynb` (exports outputs under `./artifacts/`)
+When retrieval events are available, the analysis estimates whether weaker outcomes are more likely retrieval-side or generation-side.
+
+### 4) Compare configurations with trade-offs
+
+The configuration view combines quality, hallucination rate, cost, and latency into a transparent offline score. The score is a shortlist aid, not a universal objective.
+
+### 5) Simulate thresholds offline
+
+The threshold section shows how a probability threshold changes coverage and observed error on a held-out split. This is an offline diagnostic, not a live gating policy.
+
+## Deliverables
+
+- `rag_qa_logs_corpus.ipynb` — main analysis notebook.
+- `ragqa-validate` — CLI for dataset integrity validation.
+- `docs/schema.md` — file and join contract.
+- `tests/data` — tiny sample dataset for CI validation.
+- `artifacts/` — placeholder for generated outputs.
 
 ## Limitations
-- Telemetry schemas vary widely; this repo enforces a strict minimum contract.
-- Deeper attribution improves when retrieval event logs are available.
-- This is a workflow template; production deployments should add access controls, redaction, and monitoring.
 
-## Next steps
-- Define a release gate policy: minimum slice quality thresholds + maximum cost/latency budgets.
-- Track stability over time (weekly baselines, regressions, drift alerts).
-- Integrate with CI/CD: block merges when validation fails or key metrics regress.
+- The dataset is synthetic and offline.
+- Real RAG applications may use different telemetry schemas.
+- The baseline model is diagnostic and should not be treated as a production gate.
+- Threshold choices should be validated against explicit quality, latency, and cost requirements before any live use.
+
+## Recommended next steps
+
+- Add more time-based slices if timestamped logs are available.
+- Track configuration changes across evaluation batches.
+- Add regression tests for critical metrics if this evolves into a larger evaluation workflow.
+- Export key notebook tables to `artifacts/` for easier review in pull requests or releases.

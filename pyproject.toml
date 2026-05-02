@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ragqa"
 version = "0.1.0"
-description = "Decision-grade RAG QA telemetry: schema-aware validation + ops notebook"
+description = "RAG QA log validation utilities and an offline evaluation notebook"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

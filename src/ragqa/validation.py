@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from .io import OPTIONAL_FILES, REQUIRED_FILES
+from .io import OPTIONAL_FILES, REQUIRED_FILES, find_dataset_file, has_dataset_file
 
 
 @dataclass(frozen=True)
@@ -56,22 +56,22 @@ def validate_dataset(data_dir: Path) -> ValidationReport:
     """
     data_dir = Path(data_dir).expanduser().resolve()
 
-    missing_files = [f for f in REQUIRED_FILES if not (data_dir / f).exists()]
+    missing_files = [filename for filename in REQUIRED_FILES if not has_dataset_file(data_dir, filename)]
     if missing_files:
         raise FileNotFoundError(f"Missing required files in {data_dir}: {missing_files}")
 
-    present_optional = {f: (data_dir / f).exists() for f in OPTIONAL_FILES}
+    present_optional = {filename: has_dataset_file(data_dir, filename) for filename in OPTIONAL_FILES}
 
-    documents = _read_csv(data_dir / "rag_corpus_documents.csv")
-    chunks = _read_csv(data_dir / "rag_corpus_chunks.csv")
-    scenarios = _read_csv(data_dir / "rag_qa_scenarios.csv")
-    eval_runs = _read_csv(data_dir / "rag_qa_eval_runs.csv")
+    documents = _read_csv(find_dataset_file(data_dir, "rag_corpus_documents.csv"))
+    chunks = _read_csv(find_dataset_file(data_dir, "rag_corpus_chunks.csv"))
+    scenarios = _read_csv(find_dataset_file(data_dir, "scenarios.csv"))
+    eval_runs = _read_csv(find_dataset_file(data_dir, "eval_runs.csv"))
 
     # Primary keys
     _assert_unique(documents, "doc_id", "rag_corpus_documents.csv")
     _assert_unique(chunks, "chunk_id", "rag_corpus_chunks.csv")
-    _assert_unique(scenarios, "scenario_id", "rag_qa_scenarios.csv")
-    _assert_unique(eval_runs, "run_id", "rag_qa_eval_runs.csv")
+    _assert_unique(scenarios, "scenario_id", "scenarios.csv")
+    _assert_unique(eval_runs, "run_id", "eval_runs.csv")
 
     # Foreign keys
     _assert_fk(chunks, "doc_id", documents, "doc_id", "chunks.doc_id -> documents.doc_id")
@@ -79,7 +79,7 @@ def validate_dataset(data_dir: Path) -> ValidationReport:
 
     # Optional: retrieval events
     if present_optional.get("rag_retrieval_events.csv"):
-        retrieval = _read_csv(data_dir / "rag_retrieval_events.csv")
+        retrieval = _read_csv(find_dataset_file(data_dir, "rag_retrieval_events.csv"))
         if "chunk_id" in retrieval.columns:
             _assert_fk(retrieval, "chunk_id", chunks, "chunk_id", "retrieval_events.chunk_id -> chunks.chunk_id")
         # If example_id exists in both, validate it (best-effort)
@@ -92,8 +92,8 @@ def validate_dataset(data_dir: Path) -> ValidationReport:
     rows = {
         "rag_corpus_documents": len(documents),
         "rag_corpus_chunks": len(chunks),
-        "rag_qa_scenarios": len(scenarios),
-        "rag_qa_eval_runs": len(eval_runs),
+        "scenarios": len(scenarios),
+        "eval_runs": len(eval_runs),
     }
 
     return ValidationReport(
